@@ -3,10 +3,10 @@ const { getComics, getComicDetails, rateComic, updateRating } = require("./comic
 const {  validateRating, validateUserId } = require("../../middleware/validation")
 const comicsRoutes=express.Router()
 
-comicsRoutes.get("/", getComics)
-comicsRoutes.get("/:comicId", getComicDetails)
-comicsRoutes.post("/:comicId/rate", validateUserId, validateRating, rateComic)
+comicsRoutes.get("/:season", getComics)
+comicsRoutes.get("/details/:comicId", getComicDetails)
+comicsRoutes.post("/details/:comicId/rate", validateUserId, validateRating, rateComic)
 
-comicsRoutes.put("/:comicId/rate/", validateUserId, validateRating, updateRating)
+comicsRoutes.put("/details/:comicId/rate/", validateUserId, validateRating, updateRating)
 
 module.exports= comicsRoutes

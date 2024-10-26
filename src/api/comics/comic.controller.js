@@ -1,9 +1,16 @@
 const Comic = require("./comic.model");
 const User = require("../users/user.model");
+
 const getComics = async (req, res) => {
   try {
-    const comics = await Comic.find({}, "cover title average_rating").lean();
-
+    const {season}=req.params
+    if (!season) {
+      return res.status(400).json({ message: "Non se proporcionou a tempada" });
+    }   
+    const comics = await Comic.find({club_season:season}, "cover title average_rating").lean();
+    if (!comics || comics.length === 0) {
+      return res.status(404).json({ message: "Non se atoparon cómics" });
+    }
     const formattedComics = comics.map((comic) => ({
       _id: comic._id,
       cover: comic.cover,

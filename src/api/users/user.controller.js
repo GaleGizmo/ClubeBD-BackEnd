@@ -19,6 +19,7 @@ const logUser=async(req, res)=>{
 const getAvailableUsers=async(req, res)=>{
     try{
         const users=await User.find({logged:false})
+        if (!users) return res.status(404).json({ message: "Non hai usuarios dispoñibles" });
         return res.status(200).json({users:users})
     }catch(err){
         console.log(err)

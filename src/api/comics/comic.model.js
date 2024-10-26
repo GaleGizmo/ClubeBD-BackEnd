@@ -69,6 +69,8 @@ const comicSchema = new Schema({
       max: 10
     }
   }],
+club_season:{ type: String,
+  required: true},
 comments_count: {
     type: Number,
     default: 0
