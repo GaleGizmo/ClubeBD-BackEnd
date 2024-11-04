@@ -1,5 +1,15 @@
 const User=require("./user.model")
 
+const createUser=async(req, res)=>{
+    try{
+        const user=new User(req.body)
+        await user.save()
+        return res.status(200).json({message:"Usuario creado", user:user})
+    }catch(err){
+        console.log(err)
+    }
+}
+
 const logUser=async(req, res)=>{
     try{
         const {userId}=req.body
@@ -57,5 +67,5 @@ const getUserRatings=async(req, res)=>{
     }
 }
 module.exports={
-    logUser, getAvailableUsers, logOutUser, getUserRatings
+    logUser, getAvailableUsers, logOutUser, getUserRatings, createUser
 }
