@@ -3,11 +3,14 @@ const User = require("../users/user.model");
 
 const getComics = async (req, res) => {
   try {
-    const {season}=req.params
+    const { season } = req.params;
     if (!season) {
       return res.status(400).json({ message: "Non se proporcionou a tempada" });
-    }   
-    const comics = await Comic.find({club_season:season}, "cover title average_rating").lean();
+    }
+    const comics = await Comic.find(
+      { club_season: season },
+      "cover title average_rating created_by"
+    ).populate("created_by").lean();
     if (!comics || comics.length === 0) {
       return res.status(404).json({ message: "Non se atoparon cómics" });
     }
@@ -16,6 +19,7 @@ const getComics = async (req, res) => {
       cover: comic.cover,
       title: comic.title,
       rating: comic.average_rating,
+      creator: comic.created_by.username,
     }));
 
     res.json(formattedComics);
@@ -26,7 +30,7 @@ const getComics = async (req, res) => {
 
 const getComicDetails = async (req, res) => {
   try {
-    const comic = await Comic.findById(req.params.comicId);
+    const comic = await Comic.findById(req.params.comicId).populate('created_by');
     res.json(comic);
   } catch (err) {
     res.status(404).json({ message: err.message });
@@ -34,12 +38,28 @@ const getComicDetails = async (req, res) => {
 };
 
 const createComic = async (req, res) => {
-  const comic = new Comic(req.body);
   try {
+    // Verificar si hay archivo de imagen en la solicitud
+    const coverUrl = req.file ? req.file.path : "https://res.cloudinary.com/dwv0trjwd/image/upload/v1730106037/comics/generic-comic-cover_jlojth.jpg";
+  
+    // Crear el objeto Comic con los datos del cuerpo y la URL de la imagen
+    const comicData = {
+      ...req.body,
+      cover: coverUrl,
+    };
+
+    const comic = new Comic(comicData);
+
     const newComic = await comic.save();
-    res.status(201).json(newComic);
+    res.status(201).json({message: "Cómic engadido!", newComic});
   } catch (err) {
-    res.status(400).json({ message: err.message });
+    console.error("Error en la creación del cómic:", err);
+    res
+      .status(500)
+      .json({
+        message:
+          "Erro ao crear o cómic. Verifica os datos e volve tentalo.",
+      });
   }
 };
 
@@ -68,11 +88,7 @@ const rateComic = async (req, res) => {
     }
 
     if (rating > 0) {
-      
-     comic.average_rating = calculateRating(
-        
-        comic.ratings
-      );
+      comic.average_rating = calculateRating(comic.ratings);
     }
     await User.findByIdAndUpdate(userId, {
       $push: { rated_comics: { comic_id: comicId, rating: rating } },
@@ -106,12 +122,8 @@ const updateRating = async (req, res) => {
       return res.status(404).json({ message: "Comic non atopado" });
     }
 
-    
-      comic.average_rating = calculateRating(
-        
-        comic.ratings
-      );
-    
+    comic.average_rating = calculateRating(comic.ratings);
+
     await User.findOneAndUpdate(
       { _id: userId, "rated_comics.comic_id": comicId },
       { $set: { "rated_comics.$.rating": rating } },
@@ -130,15 +142,15 @@ const updateRating = async (req, res) => {
 };
 
 const calculateRating = (Ratings) => {
-  const validRatings = Ratings.filter(rating => rating.rating !== 0);
-  
+  const validRatings = Ratings.filter((rating) => rating.rating !== 0);
+
   if (validRatings.length === 0) {
     return 0; // Retorna 0 si no hay ratings válidos
   }
 
   const sum = validRatings.reduce((acc, rating) => acc + rating.rating, 0);
   const averageRating = sum / validRatings.length;
-  
+
   return parseFloat(averageRating.toFixed(1));
 };
 module.exports = {
