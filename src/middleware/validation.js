@@ -8,6 +8,8 @@ const validateUserId = (req, res, next) => {
   next();
 };
 
+
+
 const validateComicId = (req, res, next) => {
   const { comicId } = req.params;
 

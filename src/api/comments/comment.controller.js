@@ -5,7 +5,8 @@ const Comment = require("./comment.model");
 const addCommentToComic = async (req, res) => {
   try {
     const { comicId } = req.params;
-    const { userId, commentText } = req.body;
+    const {  commentText } = req.body;
+    const userId = req.user._id;
 
     // Buscar o comic por ID
     const newComment = new Comment({
@@ -60,7 +61,8 @@ const getCommentsFromComic = async (req, res) => {
 const updateComment = async (req, res) => {
   try {
     const { commentId } = req.params;
-    const { userId, commentText } = req.body;
+    const { commentText } = req.body;
+    const userId = req.user._id;
 
     // Buscar el cómic y actualizar el comentario del usuario específico
     const comment = await Comment.findOneAndUpdate(
@@ -85,7 +87,7 @@ const updateComment = async (req, res) => {
 };
 const getCommentsFromUser = async (req, res) => {
   try {
-    const { userId } = req.body;
+    const userId = req.user._id;
     const comments = await Comment.find({ user_id: userId });
     res.status(200).json({ comments });
   } catch (error) {
@@ -96,7 +98,7 @@ const getCommentsFromUser = async (req, res) => {
 const deleteComment = async (req, res) => {
   try {
     const { commentId } = req.params;
-    const { userId } = req.body;
+    const userId = req.user._id;
 
     // Buscar el cómic y eliminar el comentario del usuario específico
     const comment = await Comment.findOneAndDelete({
