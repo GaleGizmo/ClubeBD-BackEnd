@@ -23,7 +23,7 @@ const login = async (req, res, next) => {
 
     // Genera el token
     const token = generateSign(user._id, user.username);
-    
+
     user.logged = true;
     await user.save();
     user.password = null;
@@ -39,7 +39,9 @@ const addPasswordToExistingUser = async (req, res, next) => {
     const { userId, password, username } = req.body;
 
     if (!userId || !password || !username) {
-      return res.status(400).json({ message: "UserID, usuario e contrasinal requeridas" });
+      return res
+        .status(400)
+        .json({ message: "UserID, usuario e contrasinal requeridas" });
     }
     const userWithSameUsername = await User.findOne({
       username: username,
@@ -47,7 +49,9 @@ const addPasswordToExistingUser = async (req, res, next) => {
     });
     if (userWithSameUsername) {
       console.log("Nome de usuario non dispoñible");
-      return res.status(400).json({ message: "Nome de usuario non dispoñible" });
+      return res
+        .status(400)
+        .json({ message: "Nome de usuario non dispoñible" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -57,7 +61,9 @@ const addPasswordToExistingUser = async (req, res, next) => {
       updateData.username = username;
     }
 
-    const user = await User.findByIdAndUpdate(userId, updateData, { new: true });
+    const user = await User.findByIdAndUpdate(userId, updateData, {
+      new: true,
+    });
 
     if (!user) {
       return res.status(404).json({ message: "Usuario non atopado" });
@@ -85,22 +91,17 @@ const createUser = async (req, res) => {
         .json({ message: "Nome de usuario non dispoñible" });
     }
 
-
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
     const newUser = new Usuario({
       email: req.body.email || null,
       password: hashedPassword,
       username: req.body.username,
-     
     });
-    
+
     const savedUser = await newUser.save();
 
     // Genera el token
-    const token = generateSign(
-      savedUser._id,
-      savedUser.username
-    );
+    const token = generateSign(savedUser._id, savedUser.username);
 
     return res.status(201).json({ token, user: savedUser });
   } catch (error) {
