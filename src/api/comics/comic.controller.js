@@ -7,10 +7,22 @@ const getComics = async (req, res) => {
     if (!season) {
       return res.status(400).json({ message: "Non se proporcionou a tempada" });
     }
-    const comics = await Comic.find(
-      { club_season: season },
-      "cover title average_rating created_by created_at"
-    ).populate("created_by").lean();
+    let comics = null;
+    if (season !== "all") {
+      comics = await Comic.find(
+        { club_season: season },
+        "cover title average_rating created_by created_at",
+      )
+        .populate("created_by")
+        .lean();
+    } else {
+      comics = await Comic.find(
+        {},
+        "cover title average_rating created_by created_at",
+      )
+        .populate("created_by")
+        .lean();
+    }
     if (!comics || comics.length === 0) {
       return res.status(404).json({ message: "Non se atoparon cómics" });
     }
@@ -31,7 +43,9 @@ const getComics = async (req, res) => {
 
 const getComicDetails = async (req, res) => {
   try {
-    const comic = await Comic.findById(req.params.comicId).populate('created_by');
+    const comic = await Comic.findById(req.params.comicId).populate(
+      "created_by",
+    );
     res.json(comic);
   } catch (err) {
     res.status(404).json({ message: err.message });
@@ -41,29 +55,28 @@ const getComicDetails = async (req, res) => {
 const createComic = async (req, res) => {
   try {
     // Verificar si hay archivo de imagen en la solicitud
-    const coverUrl = req.file ? req.file.path : "https://res.cloudinary.com/dwv0trjwd/image/upload/v1730106037/comics/generic-comic-cover_jlojth.jpg";
+    const coverUrl = req.file
+      ? req.file.path
+      : "https://res.cloudinary.com/dwv0trjwd/image/upload/v1730106037/comics/generic-comic-cover_jlojth.jpg";
     const userId = req.user._id; // Obtener el ID del usuario desde el token
     // Crear el objeto Comic con los datos del cuerpo y la URL de la imagen
     const comicData = {
       ...req.body,
       cover: coverUrl,
       created_by: userId,
-      ratings: [], 
-      average_rating: 0, 
+      ratings: [],
+      average_rating: 0,
     };
-    
+
     const comic = new Comic(comicData);
 
     const newComic = await comic.save();
-    res.status(201).json({message: "Cómic engadido!", newComic});
+    res.status(201).json({ message: "Cómic engadido!", newComic });
   } catch (err) {
     console.error("Erro na creación do cómic:", err);
-    res
-      .status(500)
-      .json({
-        message:
-          "Erro ao crear o cómic. Verifica os datos e volve tentalo.",
-      });
+    res.status(500).json({
+      message: "Erro ao crear o cómic. Verifica os datos e volve tentalo.",
+    });
   }
 };
 
@@ -85,7 +98,7 @@ const rateComic = async (req, res) => {
       {
         $push: { ratings: { user_id: userId, rating: rating } },
       },
-      { new: true }
+      { new: true },
     ).populate("ratings.user_id", "username");
 
     if (!comic) {
@@ -114,14 +127,14 @@ const rateComic = async (req, res) => {
 const updateRating = async (req, res) => {
   try {
     const { comicId } = req.params;
-    const {  rating } = req.body;
+    const { rating } = req.body;
     const userId = req.user._id; // Obtener el ID del usuario desde el token
 
     // Buscar el cómic y actualizar la valoración del usuario específico
     const comic = await Comic.findOneAndUpdate(
       { _id: comicId, "ratings.user_id": userId },
       { $set: { "ratings.$.rating": rating } },
-      { new: true }
+      { new: true },
     ).populate("ratings.user_id", "username");
 
     if (!comic) {
@@ -133,7 +146,7 @@ const updateRating = async (req, res) => {
     await User.findOneAndUpdate(
       { _id: userId, "rated_comics.comic_id": comicId },
       { $set: { "rated_comics.$.rating": rating } },
-      { new: true }
+      { new: true },
     );
     await comic.save();
 
