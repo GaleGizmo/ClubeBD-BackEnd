@@ -8,7 +8,7 @@ const getComics = async (req, res) => {
       return res.status(400).json({ message: "Non se proporcionou a tempada" });
     }
     let comics = null;
-    if (season !== "all") {
+    if (season !== "todas") {
       comics = await Comic.find(
         { club_season: season },
         "cover title average_rating created_by created_at",
